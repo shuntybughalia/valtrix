@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "VALTRIX — Measure Content. Maximize Value.", template: "%s | VALTRIX" },
-  description: "Audit your content for on-page SEO, review individual checks, and see what to improve before publishing.",
+  description: "Check your draft for AI search readiness, content value, and on-page SEO. Get a prioritized checklist of edits before publishing.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

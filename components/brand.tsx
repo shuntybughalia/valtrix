@@ -1,8 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
+import logo from "../public/valtrix-logo.webp";
 
 export function Brand() {
   return <Link className="brand" href="/" aria-label="VALTRIX home">
-    <span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m3 5 9 14 9-14M8 5l4 6.5L16 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
-    VALTRIX
+    <Image className="brand-logo" src={logo} alt="" sizes="(max-width: 480px) 142px, 180px" />
   </Link>;
 }

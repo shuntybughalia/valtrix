@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { Brand } from "../components/brand";
 import { Icon } from "../components/icon";
+import { example } from "../lib/audit";
+import { evaluateContent, exampleAuditSettings } from "../lib/content-value";
 
 const features = [
-  { icon: "target", title: "Check keyword placement", description: "See where your focus keyword appears across your title, description, headings, and opening paragraph." },
-  { icon: "file", title: "Prioritize content edits", description: "Review individual checks for metadata, heading structure, and draft length, with a clear next step for each gap." },
-  { icon: "history", title: "Revisit earlier audits", description: "Open previous results in the same browser to review what you checked and see how your draft has changed." },
+  { icon: "target", title: "AI search readiness", description: "Check whether the topic is clear upfront and the draft is organized into sections readers can scan." },
+  { icon: "file", title: "Content value", description: "Find where specific examples, actionable steps, or source links could make your draft more useful." },
+  { icon: "search", title: "On-page SEO", description: "Check how clearly your page title and meta description communicate the topic." },
 ] as const;
 
 export default function Home() {
+  const sample = evaluateContent(example, exampleAuditSettings);
   return (
     <div className="landing">
       <header className="site-nav"><div className="wrap nav-inner">
@@ -18,9 +21,9 @@ export default function Home() {
       <main>
         <section className="hero"><div className="wrap hero-inner">
           <div className="hero-copy">
-            <p className="kicker"><Icon name="chart" size={16}/> On-page SEO audits</p>
+            <p className="kicker"><Icon name="chart" size={16}/> AI SEO &amp; content value audit</p>
             <h1>Measure Content.<br/><span>Maximize Value.</span></h1>
-            <p className="hero-description">Find out what’s working in your draft and what to improve. Check your keywords, metadata, and content structure before you publish.</p>
+            <p className="hero-description">See how ready your draft is for AI search and where it can offer more value to readers. Get a clear list of edits before you publish.</p>
             <div className="flex flex-wrap items-center gap-4">
               <Link className="button button-primary" href="/dashboard">Run a content audit <Icon name="arrow" size={18}/></Link>
               <a className="text-link" href="#features">Explore features</a>
@@ -31,12 +34,14 @@ export default function Home() {
               <div className="preview-header"><span><Icon name="grid" size={16}/> Audit overview</span><small>Sample report</small></div>
               <div className="preview-body">
                 <div className="preview-summary">
-                  <div className="score-wheel" style={{ background: "conic-gradient(#a879ff 75%, #2e2447 0)" }}><div><strong>75</strong><small>/ 100</small></div></div>
-                  <div><h2>Content score</h2><p>6 of 8 checks passed</p></div>
+                  <div className="score-wheel" style={{ background: `conic-gradient(#a879ff ${sample.score}%, #2e2447 0)` }}><div><strong>{sample.score}</strong><small>/ 100</small></div></div>
+                  <div><h2>AI SEO Content Value Score</h2><p>{sample.evaluated} of 100 points evaluated</p></div>
                 </div>
-                <div className="preview-check"><span><Icon name="check" size={16}/> Page title</span><small>Passed</small></div>
-                <div className="preview-check"><span><Icon name="check" size={16}/> Focus keyword in title</span><small>Passed</small></div>
-                <div className="preview-check needs-work"><span><Icon name="file" size={16}/> Meta description</span><small>Review</small></div>
+                {sample.categories.filter(({ name }) => ["Search Intent Optimization", "Content Quality & Helpfulness", "AI Search Readability"].includes(name)).map(({ name, achieved, maximum }) => {
+                  return <div key={name} className={achieved === maximum ? "preview-check" : "preview-check needs-work"}>
+                    <span><Icon name={achieved === maximum ? "check" : "file"} size={16}/> {name}</span><small>{achieved === null ? "Not Evaluated" : `${achieved} / ${maximum}`}</small>
+                  </div>;
+                })}
               </div>
             </div>
           </div>
