@@ -2,7 +2,7 @@
 
 Measure Content. Maximize Value.
 
-VALTRIX is an on-page SEO audit tool built with Next.js, React, TypeScript, and Tailwind CSS. Paste a draft, add its page title and focus keyword, and get a score based on eight equally weighted checks. Scores measure checklist completion. The last 20 reports are stored in the browser running the audit.
+VALTRIX is a content audit tool built with Next.js, React, TypeScript, and Tailwind CSS. Paste a draft to detect its main topic and get separate E-E-A-T signal and generative search readiness scores. These are rules-based estimates from the text. The last 20 reports are stored in the browser running the audit.
 
 ## Local development
 

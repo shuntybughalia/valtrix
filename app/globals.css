@@ -86,6 +86,16 @@ button { cursor: pointer; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
 .panel-heading :is(h2, h3) { font-size: 1.2rem; font-weight: 750; letter-spacing: -.025em; }
 .workspace-heading { margin-bottom: 12px; font-size: 1.35rem; font-weight: 750; letter-spacing: -.025em; }
+.content-score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: start; gap: 12px; margin-block: 12px; }
+.content-score h3 { font-size: 1.1rem; font-weight: 750; }
+.content-score-number { color: var(--copy); }
+.content-score-number strong { font-size: 2rem; color: #5920cf; }
+.content-score progress { display: block; width: 100%; height: 9px; accent-color: var(--purple); }
+.content-score dl > div { padding-block: 9px; border-bottom: 1px solid var(--border); }
+.content-score dt { display: flex; justify-content: space-between; gap: 12px; font-weight: 650; }
+.content-score dt span { white-space: nowrap; }
+.content-score dd { margin-top: 4px; color: var(--copy); font-size: .85rem; overflow-wrap: anywhere; }
+.score-evidence { font-style: italic; }
 .audit-target { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: clamp(14px, 2vw, 19px); }
 .audit-target .kicker { color: #5b20bf; }
 .audit-target h3 { margin-block: 6px 9px; font-size: clamp(1.17rem, 2.8vw, 1.65rem); line-height: 1.24; font-weight: 760; letter-spacing: -.025em; overflow-wrap: anywhere; }
@@ -166,7 +176,7 @@ button { cursor: pointer; }
 .draft-surface:focus-within { border-color: #9970ff; }
 .audit-form .draft-surface textarea { min-height: 188px; margin: 4px 0 0; padding: 5px 0; border: 0; border-radius: 0; background: white; }
 .audit-form .draft-surface textarea:focus-visible { outline-offset: 2px; }
-.draft-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; margin-top: 10px; color: var(--copy); font-size: .8rem; }
+.draft-meta { margin-top: 10px; color: var(--copy); font-size: .8rem; text-align: right; }
 .audit-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .audit-form .audit-brief { background: white; }
 .audit-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
