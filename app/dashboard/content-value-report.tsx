@@ -1,7 +1,9 @@
 import type { ContentAudit } from "../../lib/content-value";
+import { ScoreGauge } from "./score-gauge";
 
 export function ContentValueReport({ report }: { report: ContentAudit }) {
   return <>
+    <ScoreGauge eeat={report.eeat.score} geo={report.geo.score}/>
     <div className="panel audit-target">
       <div>
         <p className="kicker">Detected topic</p>

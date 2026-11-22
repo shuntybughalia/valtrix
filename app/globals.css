@@ -86,6 +86,31 @@ button { cursor: pointer; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
 .panel-heading :is(h2, h3) { font-size: 1.2rem; font-weight: 750; letter-spacing: -.025em; }
 .workspace-heading { margin-bottom: 12px; font-size: 1.35rem; font-weight: 750; letter-spacing: -.025em; }
+.overall-score { margin-bottom: 12px; text-align: center; }
+.overall-score h3 { font-size: 1.1rem; font-weight: 750; }
+.score-gauge { position: relative; width: min(100%, 320px); aspect-ratio: 2 / 1; margin: 14px auto 0; }
+.score-gauge-arc { position: absolute; inset: 0 6% 2% 6%; overflow: hidden; }
+.score-gauge-arc::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(from 270deg, #dc8a51 0 var(--passing-arc), #27936d var(--passing-arc) 180deg, transparent 180deg);
+  mask-image: radial-gradient(circle closest-side, transparent 93%, black 94%);
+}
+.score-gauge-tick { position: absolute; inset: 0 0 12%; transform: rotate(var(--angle)); transform-origin: 50% 100%; }
+.score-gauge-tick::before { content: ""; display: block; width: 1px; height: 7%; margin: auto; background: #8b819a; }
+.score-gauge-tick[data-labeled="true"]::before { width: 2px; height: 10%; background: #3e3551; }
+.score-gauge-tick span { display: block; margin-top: 4px; font-size: .75rem; font-weight: 650; transform: rotate(calc(-1 * var(--angle))); }
+.score-gauge-tick[data-threshold="true"] span { color: #854321; }
+.score-gauge-needle { position: absolute; inset: 24% 0 12%; transform-origin: 50% 100%; }
+.score-gauge-needle::before { content: ""; display: block; width: 7px; height: 100%; margin: auto; background: var(--navy); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.score-gauge-hub { position: absolute; bottom: 12%; left: 50%; width: 16px; aspect-ratio: 1; border: 4px solid var(--navy); border-radius: 50%; background: white; transform: translate(-50%, 50%); }
+.overall-score-reading { color: var(--copy); font-variant-numeric: tabular-nums; }
+.overall-score-reading strong { color: var(--ink); font-size: 2rem; line-height: 1; }
+.overall-score-status { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 999px; background: #fff1dc; color: #7c430b; font-size: .83rem; font-weight: 700; }
+.overall-score-status[data-passed="true"] { background: #e7f7ee; color: #146042; }
 .content-score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: start; gap: 12px; margin-block: 12px; }
 .content-score h3 { font-size: 1.1rem; font-weight: 750; }
 .content-score-number { color: var(--copy); }
