@@ -11,8 +11,8 @@ export default function Dashboard() {
       <div className="dashboard-nav-inner">
         <Brand />
         <nav aria-label="Workspace navigation">
-          <a className="workspace-link current" href="#results"><Icon name="grid" size={18}/> Audit</a>
           <a className="workspace-link" href="#editor"><Icon name="file" size={18}/> Editor</a>
+          <a className="workspace-link" href="#results"><Icon name="chart" size={18}/> Results</a>
           <a className="workspace-link" href="#history"><Icon name="history" size={18}/> History</a>
         </nav>
       </div>
