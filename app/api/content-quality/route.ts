@@ -21,7 +21,7 @@ const schema = object({
   overview: string,
   overallScore: score,
   factors: object(Object.fromEntries(qualityFactorKeys.map((key) => [
-    key, object({ score: { anyOf: [score, { type: "null" }] }, summary: string }),
+    key, object({ score: { ...score, type: ["integer", "null"] }, summary: string }),
   ]))),
   issues: {
     type: "array",
@@ -114,8 +114,8 @@ function validReport(value: unknown): value is QualityReport {
 }
 
 type ProviderResponse = {
-  status?: string;
-  output?: { type?: string; content?: { type?: string; text?: string }[] }[];
+  promptFeedback?: { blockReason?: string };
+  candidates?: { finishReason?: string; content?: { parts?: { text?: string; thought?: boolean }[] } }[];
 };
 
 export async function POST(request: Request) {
@@ -138,34 +138,39 @@ export async function POST(request: Request) {
   if (!input.content.trim()) return failure("Paste some content to analyze.", 400);
   if (input.keyword.length > qualityKeywordLimit) return failure("The target keyword is too long.", 400);
 
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key) return failure("AI analysis is unavailable until the server's API key is configured.", 503);
+  const key = process.env.GEMINI_API_KEY?.trim();
+  if (!key) return failure("AI analysis is unavailable until the server's Gemini API key is configured.", 503);
+  const model = process.env.GEMINI_CONTENT_QUALITY_MODEL?.trim() || "gemini-3.1-flash-lite";
   const { content, keyword, format } = input;
   const submission: QualitySubmission = { content, keyword: keyword.trim(), format };
   const timeout = AbortSignal.timeout(105_000);
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
       signal: AbortSignal.any([timeout, request.signal]),
       body: JSON.stringify({
-        model: process.env.OPENAI_CONTENT_QUALITY_MODEL?.trim() || "gpt-5-mini",
-        store: false,
-        instructions,
-        input: JSON.stringify(submission),
-        max_output_tokens: 12_000,
-        text: { format: { type: "json_schema", name: "valtrix_content_quality_report", strict: true, schema } },
+        systemInstruction: { parts: [{ text: instructions }] },
+        contents: [{ role: "user", parts: [{ text: JSON.stringify(submission) }] }],
+        generationConfig: {
+          maxOutputTokens: 12_000,
+          responseMimeType: "application/json",
+          responseJsonSchema: schema,
+        },
       }),
     });
     if (response.status === 429) return failure("The AI service is busy or has reached its usage limit. Try again later.", 429);
     if (!response.ok) return failure("The AI service could not complete this request. Please try again.", 502);
     const result: ProviderResponse = await response.json();
-    const messages = result.output?.filter((item) => item.type === "message").flatMap((item) => item.content ?? []) ?? [];
-    if (messages.some((item) => item.type === "refusal")) return failure("The AI service could not review this content.", 422);
-    if (result.status !== "completed") {
+    const candidate = result.candidates?.[0];
+    if (result.promptFeedback?.blockReason || candidate?.finishReason === "SAFETY") {
+      return failure("The AI service could not review this content.", 422);
+    }
+    if (candidate?.finishReason !== "STOP") {
       return failure("The AI report was incomplete. Try again with a shorter section.", 502);
     }
-    const report: unknown = JSON.parse(messages.filter((item) => item.type === "output_text").map((item) => item.text).join(""));
+    const answer = candidate.content?.parts?.filter((part) => !part.thought).map((part) => part.text ?? "").join("") ?? "";
+    const report: unknown = JSON.parse(answer);
     if (!validReport(report)) return failure("The AI returned an unreadable report. Please try again.", 502);
     for (const issue of report.issues) {
       if (issue.excerpt && !content.includes(issue.excerpt)) issue.excerpt = null;

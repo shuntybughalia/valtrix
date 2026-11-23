@@ -181,7 +181,7 @@ export function QualityChecker() {
           </button>
           {pending && <span className="field-help" role="status">Long drafts may take up to two minutes.</span>}
         </div>
-        <p className="field-help" id="quality-service-note">Your draft is sent to OpenAI for analysis.</p>
+        <p className="field-help" id="quality-service-note">Your draft is sent to Google Gemini for analysis. Avoid submitting confidential drafts on the free tier.</p>
         {error && <p className="notice" role="alert">{error}</p>}
       </form>
     </section>
