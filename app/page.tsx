@@ -25,7 +25,7 @@ export default function Home() {
             <h1>Measure Content.<br/><span>Maximize Value.</span></h1>
             <p className="hero-description">See how ready your draft is for AI search and where it can offer more value to readers. Get a clear list of edits before you publish.</p>
             <div className="flex flex-wrap items-center gap-4">
-              <Link className="button button-primary" href="/dashboard">Run a content audit <Icon name="arrow" size={18}/></Link>
+              <Link className="button button-primary" href="/dashboard/quality">Open AI Content Quality Checker <Icon name="arrow" size={18}/></Link>
               <a className="text-link" href="#features">Explore features</a>
             </div>
           </div>

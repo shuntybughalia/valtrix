@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Brand } from "../../components/brand";
 import { Icon } from "../../components/icon";
 import { AuditWorkspace } from "./workspace";
@@ -11,6 +12,7 @@ export default function Dashboard() {
       <div className="dashboard-nav-inner">
         <Brand />
         <nav aria-label="Workspace navigation">
+          <Link className="workspace-link" href="/dashboard/quality"><Icon name="search" size={18}/> AI checker</Link>
           <a className="workspace-link" href="#editor"><Icon name="file" size={18}/> Editor</a>
           <a className="workspace-link" href="#results"><Icon name="chart" size={18}/> Results</a>
           <a className="workspace-link" href="#history"><Icon name="history" size={18}/> History</a>
