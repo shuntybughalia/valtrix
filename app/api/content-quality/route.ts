@@ -118,6 +118,27 @@ type ProviderResponse = {
   candidates?: { finishReason?: string; content?: { parts?: { text?: string; thought?: boolean }[] } }[];
 };
 
+async function geminiFailure(response: Response) {
+  const payload: unknown = await response.json().catch(() => null);
+  const providerError = record(payload) && record(payload.error) ? payload.error : null;
+  const details = Array.isArray(providerError?.details) ? providerError.details : [];
+  const reasons = details.flatMap((detail: unknown) =>
+    record(detail) && typeof detail.reason === "string" ? [detail.reason] : []);
+
+  if (response.status === 429) return failure("Gemini has reached its usage limit. Check the project's quota in Google AI Studio and try again later.", 429);
+  if (response.status === 401 || reasons.some((reason) => ["API_KEY_INVALID", "API_KEY_EXPIRED"].includes(reason))) {
+    return failure("Gemini rejected the API key. Check the Production GEMINI_API_KEY in Vercel and redeploy after correcting it.", 502);
+  }
+  if (response.status === 403) {
+    return failure("Gemini denied access. Check the key's restrictions and Gemini API access in its Google AI Studio project.", 502);
+  }
+  if (response.status === 404) return failure("The configured Gemini model is unavailable to this project.", 502);
+  if (providerError?.status === "FAILED_PRECONDITION") {
+    return failure("Gemini could not run under the current project's settings. Check its free-tier eligibility and supported region in Google AI Studio.", 502);
+  }
+  return failure(`Gemini could not complete the request (provider HTTP ${response.status}).`, 502);
+}
+
 export async function POST(request: Request) {
   if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get("content-type") ?? "")) {
     return failure("Send the draft as JSON.", 415);
@@ -159,8 +180,7 @@ export async function POST(request: Request) {
         },
       }),
     });
-    if (response.status === 429) return failure("The AI service is busy or has reached its usage limit. Try again later.", 429);
-    if (!response.ok) return failure("The AI service could not complete this request. Please try again.", 502);
+    if (!response.ok) return geminiFailure(response);
     const result: ProviderResponse = await response.json();
     const candidate = result.candidates?.[0];
     if (result.promptFeedback?.blockReason || candidate?.finishReason === "SAFETY") {
