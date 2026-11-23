@@ -134,6 +134,8 @@ button { cursor: pointer; }
 .quality-source, .quality-html-preview { width: 100%; min-height: 220px; margin-top: 12px; border: 1px solid var(--border); border-radius: 8px; }
 .quality-source { max-height: min(620px, 65vh); overflow: auto; padding: 14px; background: #faf9fc; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
 .quality-html-preview { height: min(620px, 65vh); background: #fff; }
+.quality-content-label { font-size: .91rem; font-weight: 680; }
+.quality-form .quality-html-preview { display: block; height: clamp(250px, 46vh, 550px); }
 .quality-view-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .quality-view-controls button[aria-pressed="true"] { background: #f4edff; color: #5920cf; border-color: #d8c5fc; }
 .quality-analysis { display: grid; min-width: 0; gap: 16px; overflow-wrap: anywhere; }

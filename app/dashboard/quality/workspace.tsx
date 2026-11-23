@@ -1,36 +1,44 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type FormEvent } from "react";
 import { Icon } from "../../../components/icon";
 import {
   qualityContentLimit, qualityFactorKeys, qualityFactors, qualityKeywordLimit, qualityStatus, verdictTopics,
   type QualityReport, type QualitySubmission,
 } from "../../../lib/quality-report";
 
-function OriginalContent({ submission }: { submission: QualitySubmission }) {
-  const [preview, setPreview] = useState<string | null>(null);
-
-  function showPreview() {
+function FormattedContent({ content, title }: { content: string; title: string }) {
+  const preview = useMemo(() => {
     const template = document.createElement("template");
-    template.innerHTML = submission.content;
+    template.innerHTML = content;
     template.content.querySelectorAll("script, iframe, frame, object, embed, meta, base, link, noscript").forEach((element) => element.remove());
     template.content.querySelectorAll("a, area, form").forEach((element) => element.setAttribute("target", "_blank"));
-    const csp = "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'";
-    setPreview(`<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}">${template.innerHTML}`);
-  }
+    const csp = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'";
+    return `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}">${template.innerHTML}`;
+  }, [content]);
+
+  return <>
+    <iframe className="quality-html-preview" title={title} sandbox="" referrerPolicy="no-referrer" srcDoc={preview}/>
+    <p className="field-help">Formatting from the pasted HTML is shown here. External images and stylesheets are blocked.</p>
+  </>;
+}
+
+function ContentViewControls({ formatted, onChange }: { formatted: boolean; onChange: (formatted: boolean) => void }) {
+  return <div className="quality-view-controls" role="group" aria-label="Content view">
+    <button type="button" className="button button-light" aria-pressed={formatted} onClick={() => onChange(true)}>Formatted content</button>
+    <button type="button" className="button button-light" aria-pressed={!formatted} onClick={() => onChange(false)}>HTML source</button>
+  </div>;
+}
+
+function OriginalContent({ submission }: { submission: QualitySubmission }) {
+  const [formatted, setFormatted] = useState(submission.format === "html");
 
   return <aside className="panel quality-original" aria-labelledby="quality-original-title">
     <h3 id="quality-original-title">Original content</h3>
-    {submission.format === "html" && <div className="quality-view-controls" aria-label="Original content view">
-      <button type="button" className="button button-light" aria-pressed={preview === null} onClick={() => setPreview(null)}>HTML source</button>
-      <button type="button" className="button button-light" aria-pressed={preview !== null} onClick={showPreview}>Formatted preview</button>
-    </div>}
-    {preview === null
-      ? <pre className="quality-source" tabIndex={0} aria-label="Original source">{submission.content}</pre>
-      : <>
-        <p className="field-help">Preview uses the formatting in the HTML. External assets and scripts are disabled.</p>
-        <iframe className="quality-html-preview" title="Read-only formatted preview" sandbox="" referrerPolicy="no-referrer" srcDoc={preview}/>
-      </>}
+    {submission.format === "html" && <ContentViewControls formatted={formatted} onChange={setFormatted}/>}
+    {formatted
+      ? <FormattedContent content={submission.content} title="Formatted original content"/>
+      : <pre className="quality-source" tabIndex={0} aria-label="Original source">{submission.content}</pre>}
   </aside>;
 }
 
@@ -101,6 +109,7 @@ export function QualityChecker() {
   const [content, setContent] = useState("");
   const [keyword, setKeyword] = useState("");
   const [format, setFormat] = useState<QualitySubmission["format"]>("text");
+  const [formatted, setFormatted] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [review, setReview] = useState<CompletedReview | null>(null);
@@ -109,6 +118,23 @@ export function QualityChecker() {
 
   useEffect(() => () => { running.current?.abort(); }, []);
   useEffect(() => { if (review) reportHeading.current?.focus(); }, [review]);
+
+  function pasteContent(event: ClipboardEvent<HTMLTextAreaElement>) {
+    const field = event.currentTarget;
+    if (field.selectionStart !== 0 || field.selectionEnd !== field.value.length) return;
+    const text = event.clipboardData.getData("text/plain");
+    const rich = event.clipboardData.getData("text/html");
+    const isSource = /^\s*(?:<!--[\s\S]*?-->\s*)*<(?:!doctype\s+html|html|body|main|article|section|div|p|h[1-6]|ul|ol|li|a|table|blockquote|strong|em|span|img)(?:[\s/>])/i.test(text);
+    const hasRichContent = Boolean(rich.trim());
+    const original = isSource || !hasRichContent ? text : rich;
+    if (!original) return;
+    event.preventDefault();
+    setContent(original);
+    setError("");
+    const isHtml = isSource || hasRichContent || format === "html";
+    setFormat(isHtml ? "html" : "text");
+    setFormatted(isHtml);
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -153,8 +179,11 @@ export function QualityChecker() {
       <form className="panel audit-form quality-form" onSubmit={submit} aria-busy={pending}>
         <div className="quality-form-options">
           <label htmlFor="quality-format">Content format
-            <select id="quality-format" value={format} onChange={(event) => setFormat(event.target.value === "html" ? "html" : "text")}>
-              <option value="text">Plain text</option><option value="html">HTML</option>
+            <select id="quality-format" value={format} onChange={(event) => {
+              setFormat(event.target.value === "html" ? "html" : "text");
+              setFormatted(false);
+            }}>
+              <option value="text">Plain text</option><option value="html">Formatted / HTML</option>
             </select>
           </label>
           <label htmlFor="quality-keyword">Target keyword <span className="optional">(optional)</span>
@@ -162,17 +191,14 @@ export function QualityChecker() {
           </label>
         </div>
         <div className="draft-surface">
-          <label htmlFor="quality-content">Original content</label>
-          <textarea id="quality-content" rows={10} value={content} onChange={(event) => { setContent(event.target.value); setError(""); }}
-            onPaste={(event) => {
-              const pasted = event.clipboardData.getData("text/plain");
-              if (event.currentTarget.value || !pasted) return;
-              event.preventDefault();
-              setContent(pasted);
-              setError("");
-              if (/<(?:!doctype\s+html|html|body|main|article|section|div|p|h[1-6]|ul|ol|a)(?:[\s>])/i.test(pasted)) setFormat("html");
-            }}
-            placeholder="Paste website text or HTML source…" spellCheck={false} aria-describedby="quality-content-length quality-service-note"/>
+          {formatted ? <p className="quality-content-label">Original content</p> : <label htmlFor="quality-content">Original content</label>}
+          {format === "html" && content && <ContentViewControls formatted={formatted} onChange={setFormatted}/>}
+          {formatted
+            ? <FormattedContent content={content} title="Formatted draft preview"/>
+            : <textarea id="quality-content" rows={10} value={content}
+                onChange={(event) => { setContent(event.target.value); setError(""); }} onPaste={pasteContent}
+                placeholder="Paste content from Word, Google Docs, or a website. HTML and plain text are also supported."
+                spellCheck={false} aria-describedby="quality-content-length quality-service-note"/>}
           <p id="quality-content-length" className="draft-meta">{content.length.toLocaleString("en-US")} / {qualityContentLimit.toLocaleString("en-US")} characters</p>
         </div>
         <div className="audit-form-actions">
